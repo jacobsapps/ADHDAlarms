@@ -1,6 +1,7 @@
 import SwiftUI
 import SwiftData
 import AlarmKit
+import AVFoundation
 
 struct AddAlarmView: View {
     @Environment(\.modelContext) private var modelContext
@@ -10,16 +11,48 @@ struct AddAlarmView: View {
     @State private var selectedTime = Date()
     @State private var selectedDays: Set<Int> = []
     @State private var showPermissionsDeniedAlert = false
+    @State private var selectedSound = "default"
+    @FocusState private var isTextFieldFocused: Bool
     
-    private let daysOfWeek = ["S", "M", "T", "W", "T", "F", "S"]
-    private let fullDayNames = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
+    private let availableSounds = ["default", "airhorn", "2sad4me", "wrongnumber", "sandstorm"]
+    
+    private var daysOfWeek: [String] {
+        let calendar = Calendar.current
+        let firstWeekday = calendar.firstWeekday
+        let shortDaySymbols = calendar.shortWeekdaySymbols
+        var orderedDays: [String] = []
+        
+        for i in 0..<7 {
+            let dayIndex = (firstWeekday - 1 + i) % 7
+            orderedDays.append(String(shortDaySymbols[dayIndex].prefix(1)))
+        }
+        return orderedDays
+    }
+    
+    private var fullDayNames: [String] {
+        let calendar = Calendar.current
+        let firstWeekday = calendar.firstWeekday
+        let weekdaySymbols = calendar.weekdaySymbols
+        var orderedDays: [String] = []
+        
+        for i in 0..<7 {
+            let dayIndex = (firstWeekday - 1 + i) % 7
+            orderedDays.append(weekdaySymbols[dayIndex])
+        }
+        return orderedDays
+    }
     
     var body: some View {
         NavigationStack {
             Form {
                 Section(header: Text("Alarm Details")) {
                     TextField("Alarm Name", text: $alarmName)
+                        .focused($isTextFieldFocused)
                     DatePicker("Time", selection: $selectedTime, displayedComponents: .hourAndMinute)
+                }
+                
+                Section(header: Text("Sound")) {
+                    SoundPickerView(availableSounds: availableSounds, selectedSound: $selectedSound)
                 }
                 
                 Section(header: Text("Days")) {
@@ -59,6 +92,9 @@ struct AddAlarmView: View {
             }
             .navigationTitle("New Alarm")
             .navigationBarTitleDisplayMode(.inline)
+            .onTapGesture {
+                isTextFieldFocused = false
+            }
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
                     Button("Cancel") {
@@ -104,13 +140,31 @@ struct AddAlarmView: View {
                 name: alarmName,
                 hour: hour,
                 minute: minute,
-                selectedDays: selectedDays
+                selectedDays: selectedDays,
+                selectedSound: selectedSound
             )
             
             modelContext.insert(alarm)
             try modelContext.save()
             
-            await scheduleAlarm(alarm: alarm)
+            let weekdays: [Locale.Weekday] = selectedDays.compactMap { dayIndex in
+                let calendar = Calendar.current
+                let firstWeekday = calendar.firstWeekday
+                let actualDayIndex = (firstWeekday - 1 + dayIndex) % 7 + 1
+                
+                switch actualDayIndex {
+                case 1: return .sunday
+                case 2: return .monday
+                case 3: return .tuesday
+                case 4: return .wednesday
+                case 5: return .thursday
+                case 6: return .friday
+                case 7: return .saturday
+                default: return nil
+                }
+            }
+            
+            await scheduleAlarm(alarm: alarm, weekdays: weekdays)
             
             dismiss()
         } catch {
@@ -118,6 +172,7 @@ struct AddAlarmView: View {
         }
     }
     
+    @MainActor
     private func requestAlarmAuthorization() async throws {
         let status = try await AlarmManager.shared.requestAuthorization()
         switch status {
@@ -135,20 +190,8 @@ struct AddAlarmView: View {
         }
     }
     
-    private func scheduleAlarm(alarm: AlarmModel) async {
+    private func scheduleAlarm(alarm: AlarmModel, weekdays: [Locale.Weekday]) async {
         do {
-            let weekdays: [Locale.Weekday] = selectedDays.map { dayIndex in
-                switch dayIndex {
-                case 0: return .sunday
-                case 1: return .monday
-                case 2: return .tuesday
-                case 3: return .wednesday
-                case 4: return .thursday
-                case 5: return .friday
-                case 6: return .saturday
-                default: return .monday
-                }
-            }
             
             let schedule = Alarm.Schedule.relative(Alarm.Schedule.Relative(
                 time: Alarm.Schedule.Relative.Time(hour: alarm.hour, minute: alarm.minute),
@@ -180,10 +223,14 @@ struct AddAlarmView: View {
                 tintColor: Color.blue
             )
             
+            // TODO: Build sound options 
+            let soundURL = Bundle.main.url(forResource: alarm.selectedSound, withExtension: "mp3")
+            
             let alarmConfiguration = AlarmManager.AlarmConfiguration<ADHDMetadata>
                 .alarm(
                     schedule: schedule,
-                    attributes: attributes
+                    attributes: attributes,
+                    sound: .default // AlertConfiguration.AlertSound.named("customSound")
                 )
             
             _ = try await AlarmManager.shared.schedule(id: alarm.id, configuration: alarmConfiguration)
@@ -194,12 +241,87 @@ struct AddAlarmView: View {
     }
 }
 
-enum AlarmError: Error {
+enum AlarmError: Error, Sendable {
     case permissionDenied
 }
 
 struct ADHDMetadata: AlarmMetadata {
     init() {}
+}
+
+struct SoundPickerView: View {
+    let availableSounds: [String]
+    @Binding var selectedSound: String
+    @State private var audioPlayer: AVAudioPlayer?
+    
+    var body: some View {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 12) {
+                ForEach(availableSounds, id: \.self) { sound in
+                    SoundItemView(
+                        soundName: sound,
+                        isSelected: selectedSound == sound,
+                        onTap: {
+                            selectedSound = sound
+                        },
+                        onPlay: {
+                            playSound(sound)
+                        }
+                    )
+                }
+            }
+            .padding(.horizontal, 16)
+        }
+    }
+    
+    private func playSound(_ soundName: String) {
+        guard let soundURL = Bundle.main.url(forResource: soundName, withExtension: "mp3") else {
+            print("Could not find sound file: \(soundName).mp3")
+            return
+        }
+        
+        do {
+            audioPlayer = try AVAudioPlayer(contentsOf: soundURL)
+            audioPlayer?.play()
+        } catch {
+            print("Error playing sound: \(error)")
+        }
+    }
+}
+
+struct SoundItemView: View {
+    let soundName: String
+    let isSelected: Bool
+    let onTap: () -> Void
+    let onPlay: () -> Void
+    
+    var body: some View {
+        VStack(spacing: 8) {
+            Text(soundName.capitalized)
+                .font(.caption)
+                .fontWeight(isSelected ? .bold : .regular)
+                .foregroundColor(isSelected ? .white : .primary)
+            
+            Button(action: onPlay) {
+                Image(systemName: "play.fill")
+                    .font(.title2)
+                    .foregroundColor(isSelected ? .white : .blue)
+            }
+            .buttonStyle(PlainButtonStyle())
+        }
+        .frame(width: 80, height: 60)
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(isSelected ? Color.blue : Color.gray.opacity(0.1))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(isSelected ? Color.blue : Color.gray.opacity(0.3), lineWidth: 1)
+        )
+        .onTapGesture {
+            onTap()
+        }
+    }
 }
 
 #Preview {

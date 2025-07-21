@@ -10,8 +10,9 @@ class AlarmModel {
     var selectedDays: Set<Int>
     var isActive: Bool
     var createdAt: Date
+    var selectedSound: String
     
-    init(id: UUID = UUID(), name: String, hour: Int, minute: Int, selectedDays: Set<Int>, isActive: Bool = true) {
+    init(id: UUID = UUID(), name: String, hour: Int, minute: Int, selectedDays: Set<Int>, isActive: Bool = true, selectedSound: String = "default") {
         self.id = id
         self.name = name
         self.hour = hour
@@ -19,6 +20,7 @@ class AlarmModel {
         self.selectedDays = selectedDays
         self.isActive = isActive
         self.createdAt = Date()
+        self.selectedSound = selectedSound
     }
     
     var timeString: String {

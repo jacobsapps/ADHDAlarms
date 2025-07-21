@@ -34,10 +34,11 @@ struct AlarmListView: View {
     private func deleteAlarms(offsets: IndexSet) {
         for index in offsets {
             let alarm = alarms[index]
-            Task {
-                try await AlarmManager.shared.stop(id: alarm.id)
-            }
+            let alarmId = alarm.id
             modelContext.delete(alarm)
+            Task {
+                try AlarmManager.shared.stop(id: alarmId)
+            }
         }
     }
 }
@@ -54,9 +55,14 @@ struct AlarmRowView: View {
                     .font(.subheadline)
                     .foregroundColor(.secondary)
                 Spacer()
-                Text(alarm.daysString)
-                    .font(.caption)
-                    .foregroundColor(.secondary)
+                VStack(alignment: .trailing, spacing: 2) {
+                    Text(alarm.daysString)
+                        .font(.caption)
+                        .foregroundColor(.secondary)
+                    Text("♪ \(alarm.selectedSound)")
+                        .font(.caption2)
+                        .foregroundColor(.blue)
+                }
             }
         }
         .padding(.vertical, 2)
