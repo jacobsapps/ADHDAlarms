@@ -6,22 +6,6 @@
 	objectVersion = 77;
 	objects = {
 
-/* Begin PBXBuildFile section */
-		16BC2E952E16AB8100104D14 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 16BC2E942E16AB8000104D14 /* WidgetKit.framework */; };
-		16BC2E972E16AB8100104D14 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = 16BC2E962E16AB8100104D14 /* SwiftUI.framework */; };
-		16BC2EA82E16AB8100104D14 /* WidgetsExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = 16BC2E922E16AB8000104D14 /* WidgetsExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-/* End PBXBuildFile section */
-
-/* Begin PBXContainerItemProxy section */
-		16BC2EA62E16AB8100104D14 /* PBXContainerItemProxy */ = {
-			isa = PBXContainerItemProxy;
-			containerPortal = 16BC2E782E16AB4100104D14 /* Project object */;
-			proxyType = 1;
-			remoteGlobalIDString = 16BC2E912E16AB8000104D14;
-			remoteInfo = WidgetsExtension;
-		};
-/* End PBXContainerItemProxy section */
-
 /* Begin PBXCopyFilesBuildPhase section */
 		16BC2EAD2E16AB8100104D14 /* Embed Foundation Extensions */ = {
 			isa = PBXCopyFilesBuildPhase;
@@ -29,7 +13,6 @@
 			dstPath = "";
 			dstSubfolderSpec = 13;
 			files = (
-				16BC2EA82E16AB8100104D14 /* WidgetsExtension.appex in Embed Foundation Extensions */,
 			);
 			name = "Embed Foundation Extensions";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -38,33 +21,27 @@
 
 /* Begin PBXFileReference section */
 		16BC2E802E16AB4100104D14 /* ADHDAlarms.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = ADHDAlarms.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		16BC2E922E16AB8000104D14 /* WidgetsExtension.appex */ = {isa = PBXFileReference; explicitFileType = "wrapper.app-extension"; includeInIndex = 0; path = WidgetsExtension.appex; sourceTree = BUILT_PRODUCTS_DIR; };
 		16BC2E942E16AB8000104D14 /* WidgetKit.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = WidgetKit.framework; path = System/Library/Frameworks/WidgetKit.framework; sourceTree = SDKROOT; };
 		16BC2E962E16AB8100104D14 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
-		16BC2EA92E16AB8100104D14 /* Exceptions for "Widgets" folder in "WidgetsExtension" target */ = {
+		16BAF3F42E1823F000FC74F5 /* Exceptions for "ADHDAlarms" folder in "ADHDAlarms" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
 				Info.plist,
 			);
-			target = 16BC2E912E16AB8000104D14 /* WidgetsExtension */;
+			target = 16BC2E7F2E16AB4100104D14 /* ADHDAlarms */;
 		};
 /* End PBXFileSystemSynchronizedBuildFileExceptionSet section */
 
 /* Begin PBXFileSystemSynchronizedRootGroup section */
 		16BC2E822E16AB4100104D14 /* ADHDAlarms */ = {
 			isa = PBXFileSystemSynchronizedRootGroup;
-			path = ADHDAlarms;
-			sourceTree = "<group>";
-		};
-		16BC2E982E16AB8100104D14 /* Widgets */ = {
-			isa = PBXFileSystemSynchronizedRootGroup;
 			exceptions = (
-				16BC2EA92E16AB8100104D14 /* Exceptions for "Widgets" folder in "WidgetsExtension" target */,
+				16BAF3F42E1823F000FC74F5 /* Exceptions for "ADHDAlarms" folder in "ADHDAlarms" target */,
 			);
-			path = Widgets;
+			path = ADHDAlarms;
 			sourceTree = "<group>";
 		};
 /* End PBXFileSystemSynchronizedRootGroup section */
@@ -77,15 +54,6 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		16BC2E8F2E16AB8000104D14 /* Frameworks */ = {
-			isa = PBXFrameworksBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-				16BC2E972E16AB8100104D14 /* SwiftUI.framework in Frameworks */,
-				16BC2E952E16AB8100104D14 /* WidgetKit.framework in Frameworks */,
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
@@ -93,7 +61,6 @@
 			isa = PBXGroup;
 			children = (
 				16BC2E822E16AB4100104D14 /* ADHDAlarms */,
-				16BC2E982E16AB8100104D14 /* Widgets */,
 				16BC2E932E16AB8000104D14 /* Frameworks */,
 				16BC2E812E16AB4100104D14 /* Products */,
 			);
@@ -103,7 +70,6 @@
 			isa = PBXGroup;
 			children = (
 				16BC2E802E16AB4100104D14 /* ADHDAlarms.app */,
-				16BC2E922E16AB8000104D14 /* WidgetsExtension.appex */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -132,7 +98,6 @@
 			buildRules = (
 			);
 			dependencies = (
-				16BC2EA72E16AB8100104D14 /* PBXTargetDependency */,
 			);
 			fileSystemSynchronizedGroups = (
 				16BC2E822E16AB4100104D14 /* ADHDAlarms */,
@@ -143,28 +108,6 @@
 			productName = ADHDAlarms;
 			productReference = 16BC2E802E16AB4100104D14 /* ADHDAlarms.app */;
 			productType = "com.apple.product-type.application";
-		};
-		16BC2E912E16AB8000104D14 /* WidgetsExtension */ = {
-			isa = PBXNativeTarget;
-			buildConfigurationList = 16BC2EAA2E16AB8100104D14 /* Build configuration list for PBXNativeTarget "WidgetsExtension" */;
-			buildPhases = (
-				16BC2E8E2E16AB8000104D14 /* Sources */,
-				16BC2E8F2E16AB8000104D14 /* Frameworks */,
-				16BC2E902E16AB8000104D14 /* Resources */,
-			);
-			buildRules = (
-			);
-			dependencies = (
-			);
-			fileSystemSynchronizedGroups = (
-				16BC2E982E16AB8100104D14 /* Widgets */,
-			);
-			name = WidgetsExtension;
-			packageProductDependencies = (
-			);
-			productName = WidgetsExtension;
-			productReference = 16BC2E922E16AB8000104D14 /* WidgetsExtension.appex */;
-			productType = "com.apple.product-type.app-extension";
 		};
 /* End PBXNativeTarget section */
 
@@ -177,9 +120,6 @@
 				LastUpgradeCheck = 1630;
 				TargetAttributes = {
 					16BC2E7F2E16AB4100104D14 = {
-						CreatedOnToolsVersion = 16.3;
-					};
-					16BC2E912E16AB8000104D14 = {
 						CreatedOnToolsVersion = 16.3;
 					};
 				};
@@ -199,20 +139,12 @@
 			projectRoot = "";
 			targets = (
 				16BC2E7F2E16AB4100104D14 /* ADHDAlarms */,
-				16BC2E912E16AB8000104D14 /* WidgetsExtension */,
 			);
 		};
 /* End PBXProject section */
 
 /* Begin PBXResourcesBuildPhase section */
 		16BC2E7E2E16AB4100104D14 /* Resources */ = {
-			isa = PBXResourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
-		16BC2E902E16AB8000104D14 /* Resources */ = {
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
@@ -229,22 +161,7 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
-		16BC2E8E2E16AB8000104D14 /* Sources */ = {
-			isa = PBXSourcesBuildPhase;
-			buildActionMask = 2147483647;
-			files = (
-			);
-			runOnlyForDeploymentPostprocessing = 0;
-		};
 /* End PBXSourcesBuildPhase section */
-
-/* Begin PBXTargetDependency section */
-		16BC2EA72E16AB8100104D14 /* PBXTargetDependency */ = {
-			isa = PBXTargetDependency;
-			target = 16BC2E912E16AB8000104D14 /* WidgetsExtension */;
-			targetProxy = 16BC2EA62E16AB8100104D14 /* PBXContainerItemProxy */;
-		};
-/* End PBXTargetDependency section */
 
 /* Begin XCBuildConfiguration section */
 		16BC2E892E16AB4200104D14 /* Debug */ = {
@@ -376,12 +293,15 @@
 				DEVELOPMENT_TEAM = 9H7GAWSLA8;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ADHDAlarms/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -389,9 +309,13 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jacob.ADHDAlarms;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Debug;
 		};
@@ -405,12 +329,15 @@
 				DEVELOPMENT_TEAM = 9H7GAWSLA8;
 				ENABLE_PREVIEWS = YES;
 				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_FILE = ADHDAlarms/Info.plist;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
+				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -418,63 +345,13 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.jacob.ADHDAlarms;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
+				SUPPORTS_MAC_DESIGNED_FOR_IPHONE_IPAD = NO;
+				SUPPORTS_XR_DESIGNED_FOR_IPHONE_IPAD = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
 				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Release;
-		};
-		16BC2EAB2E16AB8100104D14 /* Debug */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 9H7GAWSLA8;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = Widgets/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Widgets;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.jacob.ADHDAlarms.Widgets;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SKIP_INSTALL = YES;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
-			};
-			name = Debug;
-		};
-		16BC2EAC2E16AB8100104D14 /* Release */ = {
-			isa = XCBuildConfiguration;
-			buildSettings = {
-				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
-				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
-				CODE_SIGN_STYLE = Automatic;
-				CURRENT_PROJECT_VERSION = 1;
-				DEVELOPMENT_TEAM = 9H7GAWSLA8;
-				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = Widgets/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = Widgets;
-				INFOPLIST_KEY_NSHumanReadableCopyright = "";
-				LD_RUNPATH_SEARCH_PATHS = (
-					"$(inherited)",
-					"@executable_path/Frameworks",
-					"@executable_path/../../Frameworks",
-				);
-				MARKETING_VERSION = 1.0;
-				PRODUCT_BUNDLE_IDENTIFIER = com.jacob.ADHDAlarms.Widgets;
-				PRODUCT_NAME = "$(TARGET_NAME)";
-				SKIP_INSTALL = YES;
-				SWIFT_EMIT_LOC_STRINGS = YES;
-				SWIFT_VERSION = 5.0;
-				TARGETED_DEVICE_FAMILY = "1,2";
+				TARGETED_DEVICE_FAMILY = 1;
 			};
 			name = Release;
 		};
@@ -495,15 +372,6 @@
 			buildConfigurations = (
 				16BC2E8C2E16AB4200104D14 /* Debug */,
 				16BC2E8D2E16AB4200104D14 /* Release */,
-			);
-			defaultConfigurationIsVisible = 0;
-			defaultConfigurationName = Release;
-		};
-		16BC2EAA2E16AB8100104D14 /* Build configuration list for PBXNativeTarget "WidgetsExtension" */ = {
-			isa = XCConfigurationList;
-			buildConfigurations = (
-				16BC2EAB2E16AB8100104D14 /* Debug */,
-				16BC2EAC2E16AB8100104D14 /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
