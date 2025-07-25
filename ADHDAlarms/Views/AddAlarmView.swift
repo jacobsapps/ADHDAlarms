@@ -1,4 +1,5 @@
 import SwiftUI
+import ActivityKit
 import SwiftData
 import AlarmKit
 import AVFoundation
@@ -7,12 +8,21 @@ struct AddAlarmView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
     
+    let editingAlarm: AlarmModel?
+    
     @State private var alarmName = ""
     @State private var selectedTime = Date()
     @State private var selectedDays: Set<Int> = []
     @State private var showPermissionsDeniedAlert = false
     @State private var selectedSound = "default"
+    @State private var selectedSnoozeDelay: Int = 300
+    @State private var selectedButtonColor: Color = .blue
+    @State private var selectedTextColor: Color = .white
     @FocusState private var isTextFieldFocused: Bool
+    
+    init(editingAlarm: AlarmModel? = nil) {
+        self.editingAlarm = editingAlarm
+    }
     
     private let availableSounds = ["default", "airhorn", "2sad4me", "wrongnumber", "sandstorm"]
     
@@ -45,55 +55,35 @@ struct AddAlarmView: View {
     var body: some View {
         NavigationStack {
             Form {
-                Section(header: Text("Alarm Details")) {
-                    TextField("Alarm Name", text: $alarmName)
-                        .focused($isTextFieldFocused)
-                    DatePicker("Time", selection: $selectedTime, displayedComponents: .hourAndMinute)
-                }
+                AlarmDetailsSection(
+                    alarmName: $alarmName,
+                    selectedTime: $selectedTime,
+                    isTextFieldFocused: $isTextFieldFocused
+                )
                 
                 Section(header: Text("Sound")) {
                     SoundPickerView(availableSounds: availableSounds, selectedSound: $selectedSound)
                 }
                 
-                Section(header: Text("Days")) {
-                    VStack(spacing: 16) {
-                        HStack {
-                            ForEach(0..<7) { dayIndex in
-                                Button(action: {
-                                    toggleDay(dayIndex)
-                                }) {
-                                    Text(daysOfWeek[dayIndex])
-                                        .font(.system(size: 16, weight: .medium))
-                                        .foregroundColor(selectedDays.contains(dayIndex) ? .white : .primary)
-                                        .frame(width: 40, height: 40)
-                                        .background(selectedDays.contains(dayIndex) ? Color.blue : Color.gray.opacity(0.2))
-                                        .clipShape(Circle())
-                                }
-                                .buttonStyle(PlainButtonStyle())
-                            }
-                        }
-                        
-                        HStack {
-                            Button("Select All") {
-                                selectedDays = Set(0..<7)
-                            }
-                            .buttonStyle(.bordered)
-                            
-                            Spacer()
-                            
-                            Button("Deselect All") {
-                                selectedDays.removeAll()
-                            }
-                            .buttonStyle(.bordered)
-                        }
-                    }
-                    .padding(.vertical, 8)
-                }
+                DaysSelectionSection(
+                    selectedDays: $selectedDays,
+                    daysOfWeek: daysOfWeek
+                )
+                
+                SnoozeDelaySection(selectedSnoozeDelay: $selectedSnoozeDelay)
+                
+                AlarmColorsSection(
+                    selectedButtonColor: $selectedButtonColor,
+                    selectedTextColor: $selectedTextColor
+                )
             }
-            .navigationTitle("New Alarm")
+            .navigationTitle(isEditing ? "Edit Alarm" : "New Alarm")
             .navigationBarTitleDisplayMode(.inline)
             .onTapGesture {
                 isTextFieldFocused = false
+            }
+            .onAppear {
+                loadAlarmData()
             }
             .toolbar {
                 ToolbarItem(placement: .navigationBarLeading) {
@@ -119,13 +109,24 @@ struct AddAlarmView: View {
         }
     }
     
-    private func toggleDay(_ day: Int) {
-        if selectedDays.contains(day) {
-            selectedDays.remove(day)
-        } else {
-            selectedDays.insert(day)
-        }
+    private var isEditing: Bool {
+        editingAlarm != nil
     }
+    
+    private func loadAlarmData() {
+        guard let alarm = editingAlarm else { return }
+        
+        alarmName = alarm.name
+        selectedDays = alarm.selectedDays
+        selectedSound = alarm.selectedSound
+        selectedSnoozeDelay = alarm.snoozeDelay
+        selectedButtonColor = alarm.buttonColor
+        selectedTextColor = alarm.textColor
+        
+        let calendar = Calendar.current
+        selectedTime = calendar.date(bySettingHour: alarm.hour, minute: alarm.minute, second: 0, of: Date()) ?? Date()
+    }
+    
     
     @MainActor
     private func saveAlarm() async {
@@ -136,16 +137,38 @@ struct AddAlarmView: View {
             let hour = calendar.component(.hour, from: selectedTime)
             let minute = calendar.component(.minute, from: selectedTime)
             
-            let alarm = AlarmModel(
-                name: alarmName,
-                hour: hour,
-                minute: minute,
-                selectedDays: selectedDays,
-                selectedSound: selectedSound
-            )
+            let alarm: AlarmModel
+            if let editingAlarm = editingAlarm {
+                // Update existing alarm
+                try await AlarmManager.shared.stop(id: editingAlarm.id)
+                
+                editingAlarm.name = alarmName
+                editingAlarm.hour = hour
+                editingAlarm.minute = minute
+                editingAlarm.selectedDays = selectedDays
+                editingAlarm.selectedSound = selectedSound
+                editingAlarm.snoozeDelay = selectedSnoozeDelay
+                editingAlarm.buttonColorHex = selectedButtonColor.toHex()
+                editingAlarm.textColorHex = selectedTextColor.toHex()
+                
+                alarm = editingAlarm
+            } else {
+                // Create new alarm
+                alarm = AlarmModel(
+                    name: alarmName,
+                    hour: hour,
+                    minute: minute,
+                    selectedDays: selectedDays,
+                    selectedSound: selectedSound,
+                    snoozeDelay: selectedSnoozeDelay,
+                    buttonColor: selectedButtonColor,
+                    textColor: selectedTextColor
+                )
+                modelContext.insert(alarm)
+            }
             
-            modelContext.insert(alarm)
             try modelContext.save()
+            print("✅ Alarm saved to SwiftData: \(alarm.name) at \(alarm.timeString)")
             
             let weekdays: [Locale.Weekday] = selectedDays.compactMap { dayIndex in
                 let calendar = Calendar.current
@@ -192,7 +215,6 @@ struct AddAlarmView: View {
     
     private func scheduleAlarm(alarm: AlarmModel, weekdays: [Locale.Weekday]) async {
         do {
-            
             let schedule = Alarm.Schedule.relative(Alarm.Schedule.Relative(
                 time: Alarm.Schedule.Relative.Time(hour: alarm.hour, minute: alarm.minute),
                 repeats: Alarm.Schedule.Relative.Recurrence.weekly(weekdays)
@@ -200,14 +222,20 @@ struct AddAlarmView: View {
             
             let stopButton = AlarmButton(
                 text: "Done",
-                textColor: .white,
+                textColor: alarm.textColor,
                 systemImageName: "checkmark.seal.fill"
             )
             
             let repeatButton = AlarmButton(
                 text: "Snooze",
-                textColor: .red,
+                textColor: alarm.textColor,
                 systemImageName: "repeat.circle.fill"
+            )
+            
+            // Configure snooze countdown presentation (correct API)
+            let countdownPresentation = AlarmPresentation.Countdown(
+                title: LocalizedStringResource(stringLiteral: "\\(alarm.name) - Snoozing"),
+                pauseButton: repeatButton
             )
             
             let alertPresentation = AlarmPresentation.Alert(
@@ -217,21 +245,30 @@ struct AddAlarmView: View {
                 secondaryButtonBehavior: .countdown
             )
             
-            let attributes = AlarmAttributes(
-                presentation: AlarmPresentation(alert: alertPresentation),
-                metadata: ADHDMetadata(),
-                tintColor: Color.blue
+            let presentation = AlarmPresentation(
+                alert: alertPresentation,
+                countdown: countdownPresentation
             )
             
-            // TODO: Build sound options 
-            let soundURL = Bundle.main.url(forResource: alarm.selectedSound, withExtension: "mp3")
+            let attributes = AlarmAttributes(
+                presentation: presentation,
+                metadata: ADHDMetadata(),
+                tintColor: alarm.buttonColor
+            )
             
-            let alarmConfiguration = AlarmManager.AlarmConfiguration<ADHDMetadata>
-                .alarm(
-                    schedule: schedule,
-                    attributes: attributes,
-                    sound: .default // AlertConfiguration.AlertSound.named("customSound")
-                )
+            // Use the selected snooze delay for countdown duration
+            let countdownDuration = Alarm.CountdownDuration(
+                preAlert: nil,
+                postAlert: TimeInterval(alarm.snoozeDelay)
+            )
+            
+            let alarmConfiguration = AlarmManager.AlarmConfiguration(
+                countdownDuration: countdownDuration,
+                schedule: schedule,
+                attributes: attributes,
+                secondaryIntent: nil,
+                sound: AlertConfiguration.AlertSound.named("2sad4me")
+            )
             
             _ = try await AlarmManager.shared.schedule(id: alarm.id, configuration: alarmConfiguration)
             

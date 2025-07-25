@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import SwiftUI
 
 @Model
 class AlarmModel {
@@ -10,9 +11,12 @@ class AlarmModel {
     var selectedDays: Set<Int>
     var isActive: Bool
     var createdAt: Date
-    var selectedSound: String
+    var selectedSound: String?
+    var snoozeDelay: Int
+    var buttonColorHex: String
+    var textColorHex: String
     
-    init(id: UUID = UUID(), name: String, hour: Int, minute: Int, selectedDays: Set<Int>, isActive: Bool = true, selectedSound: String = "default") {
+    init(id: UUID = UUID(), name: String, hour: Int, minute: Int, selectedDays: Set<Int>, isActive: Bool = true, selectedSound: String? = nil, snoozeDelay: Int = 300, buttonColor: Color = .blue, textColor: Color = .white) {
         self.id = id
         self.name = name
         self.hour = hour
@@ -21,6 +25,9 @@ class AlarmModel {
         self.isActive = isActive
         self.createdAt = Date()
         self.selectedSound = selectedSound
+        self.snoozeDelay = snoozeDelay
+        self.buttonColorHex = buttonColor.toHex()
+        self.textColorHex = textColor.toHex()
     }
     
     var timeString: String {
@@ -34,4 +41,27 @@ class AlarmModel {
         let dayNames = ["S", "M", "T", "W", "T", "F", "S"]
         return selectedDays.sorted().map { dayNames[$0] }.joined(separator: " ")
     }
+    
+    var buttonColor: Color {
+        return Color(hex: buttonColorHex) ?? .blue
+    }
+    
+    var textColor: Color {
+        return Color(hex: textColorHex) ?? .white
+    }
+    
+    var snoozeDelayString: String {
+        switch snoozeDelay {
+        case 60: return "1m"
+        case 300: return "5m"
+        case 600: return "10m"
+        case 1800: return "30m"
+        case 3600: return "1h"
+        case 7200: return "2h"
+        case 14400: return "4h"
+        case 86400: return "1d"
+        default: return "\(snoozeDelay)s"
+        }
+    }
 }
+

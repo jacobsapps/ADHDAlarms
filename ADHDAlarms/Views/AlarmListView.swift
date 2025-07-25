@@ -6,14 +6,30 @@ struct AlarmListView: View {
     @Environment(\.modelContext) private var modelContext
     @Query private var alarms: [AlarmModel]
     @State private var showingAddAlarm = false
+    @State private var editingAlarm: AlarmModel?
     
     var body: some View {
         NavigationStack {
             List {
                 ForEach(alarms) { alarm in
                     AlarmRowView(alarm: alarm)
+                        .onTapGesture {
+                            editingAlarm = alarm
+                        }
                 }
                 .onDelete(perform: deleteAlarms)
+                
+                if alarms.isEmpty {
+                    Text("No alarms yet - tap + to create one")
+                        .foregroundColor(.secondary)
+                        .italic()
+                }
+            }
+            .onAppear {
+                print("🔍 AlarmListView appeared with \(alarms.count) alarms")
+                for alarm in alarms {
+                    print("  - \(alarm.name) at \(alarm.timeString)")
+                }
             }
             .navigationTitle("Alarms")
             .toolbar {
@@ -27,6 +43,9 @@ struct AlarmListView: View {
             }
             .sheet(isPresented: $showingAddAlarm) {
                 AddAlarmView()
+            }
+            .sheet(item: $editingAlarm) { alarm in
+                AddAlarmView(editingAlarm: alarm)
             }
         }
     }
@@ -47,9 +66,14 @@ struct AlarmRowView: View {
     let alarm: AlarmModel
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 4) {
-            Text(alarm.name)
-                .font(.headline)
+        VStack(alignment: .leading, spacing: 6) {
+            HStack {
+                Text(alarm.name)
+                    .font(.headline)
+                Spacer()
+                AlarmColorDots(buttonColor: alarm.buttonColor, textColor: alarm.textColor)
+            }
+            
             HStack {
                 Text(alarm.timeString)
                     .font(.subheadline)
@@ -59,13 +83,21 @@ struct AlarmRowView: View {
                     Text(alarm.daysString)
                         .font(.caption)
                         .foregroundColor(.secondary)
-                    Text("♪ \(alarm.selectedSound)")
-                        .font(.caption2)
-                        .foregroundColor(.blue)
+                    HStack(spacing: 4) {
+                        Text("♪ \(alarm.selectedSound)")
+                            .font(.caption2)
+                            .foregroundColor(.blue)
+                        Text("•")
+                            .font(.caption2)
+                            .foregroundColor(.secondary)
+                        Text("⏰ \(alarm.snoozeDelayString)")
+                            .font(.caption2)
+                            .foregroundColor(.orange)
+                    }
                 }
             }
         }
-        .padding(.vertical, 2)
+        .padding(.vertical, 4)
     }
 }
 
