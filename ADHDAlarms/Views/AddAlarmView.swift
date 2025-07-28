@@ -12,19 +12,26 @@ struct AddAlarmView: View {
     
     @State private var alarmName = ""
     @State private var selectedTime = Date()
-    @State private var selectedDays: Set<Int> = []
+    @State private var selectedDays: Set<Int> = {
+        let calendar = Calendar.current
+        let today = calendar.component(.weekday, from: Date())
+        let firstWeekday = calendar.firstWeekday
+        let adjustedToday = (today - firstWeekday + 7) % 7
+        return [adjustedToday]
+    }()
     @State private var showPermissionsDeniedAlert = false
-    @State private var selectedSound = "default"
+    @State private var selectedSound: String? = nil
     @State private var selectedSnoozeDelay: Int = 300
     @State private var selectedButtonColor: Color = .blue
     @State private var selectedTextColor: Color = .white
+    @State private var stopButtonTitle: String = "Stop"
+    @State private var snoozeButtonTitle: String = "Snooze"
     @FocusState private var isTextFieldFocused: Bool
     
     init(editingAlarm: AlarmModel? = nil) {
         self.editingAlarm = editingAlarm
     }
     
-    private let availableSounds = ["default", "airhorn", "2sad4me", "wrongnumber", "sandstorm"]
     
     private var daysOfWeek: [String] {
         let calendar = Calendar.current
@@ -61,9 +68,7 @@ struct AddAlarmView: View {
                     isTextFieldFocused: $isTextFieldFocused
                 )
                 
-                Section(header: Text("Sound")) {
-                    SoundPickerView(availableSounds: availableSounds, selectedSound: $selectedSound)
-                }
+                SoundSelectionSection(selectedSound: $selectedSound)
                 
                 DaysSelectionSection(
                     selectedDays: $selectedDays,
@@ -75,6 +80,12 @@ struct AddAlarmView: View {
                 AlarmColorsSection(
                     selectedButtonColor: $selectedButtonColor,
                     selectedTextColor: $selectedTextColor
+                )
+                
+                ButtonTitlesSection(
+                    stopButtonTitle: $stopButtonTitle,
+                    snoozeButtonTitle: $snoozeButtonTitle,
+                    isTextFieldFocused: $isTextFieldFocused
                 )
             }
             .navigationTitle(isEditing ? "Edit Alarm" : "New Alarm")
@@ -122,6 +133,8 @@ struct AddAlarmView: View {
         selectedSnoozeDelay = alarm.snoozeDelay
         selectedButtonColor = alarm.buttonColor
         selectedTextColor = alarm.textColor
+        stopButtonTitle = alarm.stopButtonTitle ?? "Stop"
+        snoozeButtonTitle = alarm.snoozeButtonTitle ?? "Snooze"
         
         let calendar = Calendar.current
         selectedTime = calendar.date(bySettingHour: alarm.hour, minute: alarm.minute, second: 0, of: Date()) ?? Date()
@@ -137,38 +150,53 @@ struct AddAlarmView: View {
             let hour = calendar.component(.hour, from: selectedTime)
             let minute = calendar.component(.minute, from: selectedTime)
             
-            let alarm: AlarmModel
+            // For existing alarms, stop and delete the current alarm first
             if let editingAlarm = editingAlarm {
-                // Update existing alarm
-                try await AlarmManager.shared.stop(id: editingAlarm.id)
+                print("🗑️ Deleting existing alarm: \(editingAlarm.name)")
                 
-                editingAlarm.name = alarmName
-                editingAlarm.hour = hour
-                editingAlarm.minute = minute
-                editingAlarm.selectedDays = selectedDays
-                editingAlarm.selectedSound = selectedSound
-                editingAlarm.snoozeDelay = selectedSnoozeDelay
-                editingAlarm.buttonColorHex = selectedButtonColor.toHex()
-                editingAlarm.textColorHex = selectedTextColor.toHex()
+                // Stop the alarm in AlarmManager
+                do {
+                    try await AlarmManager.shared.stop(id: editingAlarm.id)
+                    print("✅ Stopped existing alarm with ID: \(editingAlarm.id)")
+                } catch {
+                    print("⚠️ Failed to stop existing alarm (continuing anyway): \(error)")
+                }
                 
-                alarm = editingAlarm
-            } else {
-                // Create new alarm
-                alarm = AlarmModel(
-                    name: alarmName,
-                    hour: hour,
-                    minute: minute,
-                    selectedDays: selectedDays,
-                    selectedSound: selectedSound,
-                    snoozeDelay: selectedSnoozeDelay,
-                    buttonColor: selectedButtonColor,
-                    textColor: selectedTextColor
-                )
-                modelContext.insert(alarm)
+                // Delete from SwiftData and save immediately
+                modelContext.delete(editingAlarm)
+                do {
+                    try modelContext.save()
+                    print("✅ Deleted existing alarm from SwiftData")
+                } catch {
+                    print("❌ Failed to delete existing alarm: \(error)")
+                    throw error
+                }
             }
             
-            try modelContext.save()
-            print("✅ Alarm saved to SwiftData: \(alarm.name) at \(alarm.timeString)")
+            // Create a new alarm (whether editing or creating new)
+            print("➕ Creating new alarm")
+            let alarm = AlarmModel(
+                name: alarmName,
+                hour: hour,
+                minute: minute,
+                selectedDays: selectedDays,
+                selectedSound: selectedSound,
+                snoozeDelay: selectedSnoozeDelay,
+                buttonColor: selectedButtonColor,
+                textColor: selectedTextColor,
+                stopButtonTitle: stopButtonTitle.isEmpty ? nil : stopButtonTitle,
+                snoozeButtonTitle: snoozeButtonTitle.isEmpty ? nil : snoozeButtonTitle
+            )
+            modelContext.insert(alarm)
+            
+            // Save the new alarm
+            do {
+                try modelContext.save()
+                print("✅ Alarm saved to SwiftData: \(alarm.name) at \(alarm.timeString)")
+            } catch {
+                print("❌ Failed to save alarm to SwiftData: \(error)")
+                throw error
+            }
             
             let weekdays: [Locale.Weekday] = selectedDays.compactMap { dayIndex in
                 let calendar = Calendar.current
@@ -187,6 +215,8 @@ struct AddAlarmView: View {
                 }
             }
             
+            // Always schedule the alarm (whether new or updated)
+            print("🔄 Scheduling alarm with AlarmManager...")
             await scheduleAlarm(alarm: alarm, weekdays: weekdays)
             
             dismiss()
@@ -221,20 +251,20 @@ struct AddAlarmView: View {
             ))
             
             let stopButton = AlarmButton(
-                text: "Done",
+                text: LocalizedStringResource(stringLiteral: alarm.stopButtonTitle ?? "Stop"),
                 textColor: alarm.textColor,
                 systemImageName: "checkmark.seal.fill"
             )
             
             let repeatButton = AlarmButton(
-                text: "Snooze",
+                text: LocalizedStringResource(stringLiteral: alarm.snoozeButtonTitle ?? "Snooze"),
                 textColor: alarm.textColor,
                 systemImageName: "repeat.circle.fill"
             )
             
             // Configure snooze countdown presentation (correct API)
             let countdownPresentation = AlarmPresentation.Countdown(
-                title: LocalizedStringResource(stringLiteral: "\\(alarm.name) - Snoozing"),
+                title: LocalizedStringResource(stringLiteral: alarm.name),
                 pauseButton: repeatButton
             )
             
@@ -262,15 +292,33 @@ struct AddAlarmView: View {
                 postAlert: TimeInterval(alarm.snoozeDelay)
             )
             
+            // Configure sound with detailed logging
+            let soundConfig: AlertConfiguration.AlertSound
+            if let selectedSoundName = alarm.selectedSound {
+                // Verify the sound file exists
+                if let soundURL = Bundle.main.url(forResource: selectedSoundName, withExtension: "mp3") {
+                    soundConfig = AlertConfiguration.AlertSound.named(selectedSoundName)
+                    print("🔊 Using custom sound: \(selectedSoundName) (found at \(soundURL))")
+                } else {
+                    soundConfig = .default
+                    print("⚠️ Custom sound \(selectedSoundName).mp3 not found in bundle, using default")
+                }
+            } else {
+                soundConfig = .default
+                print("🔊 Using default sound")
+            }
+            
             let alarmConfiguration = AlarmManager.AlarmConfiguration(
                 countdownDuration: countdownDuration,
                 schedule: schedule,
                 attributes: attributes,
                 secondaryIntent: nil,
-                sound: AlertConfiguration.AlertSound.named("2sad4me")
+                sound: soundConfig
             )
             
-            _ = try await AlarmManager.shared.schedule(id: alarm.id, configuration: alarmConfiguration)
+            print("🚀 Scheduling alarm with ID: \(alarm.id)")
+            let scheduledAlarm = try await AlarmManager.shared.schedule(id: alarm.id, configuration: alarmConfiguration)
+            print("✅ Successfully scheduled alarm: \(scheduledAlarm)")
             
         } catch {
             print("Error scheduling alarm: \(error)")
@@ -286,80 +334,6 @@ struct ADHDMetadata: AlarmMetadata {
     init() {}
 }
 
-struct SoundPickerView: View {
-    let availableSounds: [String]
-    @Binding var selectedSound: String
-    @State private var audioPlayer: AVAudioPlayer?
-    
-    var body: some View {
-        ScrollView(.horizontal, showsIndicators: false) {
-            HStack(spacing: 12) {
-                ForEach(availableSounds, id: \.self) { sound in
-                    SoundItemView(
-                        soundName: sound,
-                        isSelected: selectedSound == sound,
-                        onTap: {
-                            selectedSound = sound
-                        },
-                        onPlay: {
-                            playSound(sound)
-                        }
-                    )
-                }
-            }
-            .padding(.horizontal, 16)
-        }
-    }
-    
-    private func playSound(_ soundName: String) {
-        guard let soundURL = Bundle.main.url(forResource: soundName, withExtension: "mp3") else {
-            print("Could not find sound file: \(soundName).mp3")
-            return
-        }
-        
-        do {
-            audioPlayer = try AVAudioPlayer(contentsOf: soundURL)
-            audioPlayer?.play()
-        } catch {
-            print("Error playing sound: \(error)")
-        }
-    }
-}
-
-struct SoundItemView: View {
-    let soundName: String
-    let isSelected: Bool
-    let onTap: () -> Void
-    let onPlay: () -> Void
-    
-    var body: some View {
-        VStack(spacing: 8) {
-            Text(soundName.capitalized)
-                .font(.caption)
-                .fontWeight(isSelected ? .bold : .regular)
-                .foregroundColor(isSelected ? .white : .primary)
-            
-            Button(action: onPlay) {
-                Image(systemName: "play.fill")
-                    .font(.title2)
-                    .foregroundColor(isSelected ? .white : .blue)
-            }
-            .buttonStyle(PlainButtonStyle())
-        }
-        .frame(width: 80, height: 60)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(isSelected ? Color.blue : Color.gray.opacity(0.1))
-        )
-        .overlay(
-            RoundedRectangle(cornerRadius: 12)
-                .stroke(isSelected ? Color.blue : Color.gray.opacity(0.3), lineWidth: 1)
-        )
-        .onTapGesture {
-            onTap()
-        }
-    }
-}
 
 #Preview {
     AddAlarmView()

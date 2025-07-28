@@ -15,8 +15,10 @@ class AlarmModel {
     var snoozeDelay: Int
     var buttonColorHex: String
     var textColorHex: String
+    var stopButtonTitle: String?
+    var snoozeButtonTitle: String?
     
-    init(id: UUID = UUID(), name: String, hour: Int, minute: Int, selectedDays: Set<Int>, isActive: Bool = true, selectedSound: String? = nil, snoozeDelay: Int = 300, buttonColor: Color = .blue, textColor: Color = .white) {
+    init(id: UUID = UUID(), name: String, hour: Int, minute: Int, selectedDays: Set<Int>, isActive: Bool = true, selectedSound: String? = nil, snoozeDelay: Int = 300, buttonColor: Color = .blue, textColor: Color = .white, stopButtonTitle: String? = nil, snoozeButtonTitle: String? = nil) {
         self.id = id
         self.name = name
         self.hour = hour
@@ -28,6 +30,8 @@ class AlarmModel {
         self.snoozeDelay = snoozeDelay
         self.buttonColorHex = buttonColor.toHex()
         self.textColorHex = textColor.toHex()
+        self.stopButtonTitle = stopButtonTitle
+        self.snoozeButtonTitle = snoozeButtonTitle
     }
     
     var timeString: String {

@@ -84,7 +84,7 @@ struct AlarmRowView: View {
                         .font(.caption)
                         .foregroundColor(.secondary)
                     HStack(spacing: 4) {
-                        Text("♪ \(alarm.selectedSound)")
+                        Text("♪ \(alarm.selectedSound ?? "Default")")
                             .font(.caption2)
                             .foregroundColor(.blue)
                         Text("•")
